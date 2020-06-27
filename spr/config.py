@@ -12,9 +12,9 @@ class Config:
     def from_file(cls, filename):
         config = configparser.ConfigParser()
         config.read(filename)
-        assert "spotify" in config, f"No `spotify` section in {filename}"
-        assert "client_id" in config["spotify"], f"No Spotify client ID in {filename}"
-        assert "client_secret" in config["spotify"], f"No Spotify client secret in {filename}"
+        assert "spotify" in config, "No `spotify` section in {}".format(filename)
+        assert "client_id" in config["spotify"], "No Spotify client ID in {}".format(filename)
+        assert "client_secret" in config["spotify"], "No Spotify client secret in {}".format(filename)
 
         return cls(
             client_id=config["spotify"]["client_id"],

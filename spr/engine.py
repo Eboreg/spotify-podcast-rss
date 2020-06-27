@@ -49,10 +49,10 @@ class SPR:
         show = self.get_show_by_show_id(show_id)
         eps = self.get_episodes_by_show_id(show_id)
         if show is None:
-            warnings.warn(f"get_show_by_show_id({show_id}) returned None")
+            warnings.warn("get_show_by_show_id({}) returned None".format(show_id))
             return None
         if eps is None:
-            warnings.warn(f"get_episodes_by_show_id({show_id}) returned None")
+            warnings.warn("get_episodes_by_show_id({}) returned None".format(show_id))
             return None
 
         fg = FeedGenerator()
