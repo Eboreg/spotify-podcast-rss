@@ -47,10 +47,10 @@ class SPR:
 
     def get_rss_by_show_id(self, show_id):
         show = self.get_show_by_show_id(show_id)
-        eps = self.get_episodes_by_show_id(show_id)
         if show is None:
             warnings.warn("get_show_by_show_id({}) returned None".format(show_id))
             return None
+        eps = self.get_episodes_by_show_id(show_id)
         if eps is None:
             warnings.warn("get_episodes_by_show_id({}) returned None".format(show_id))
 
