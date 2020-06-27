@@ -53,7 +53,6 @@ class SPR:
             return None
         if eps is None:
             warnings.warn("get_episodes_by_show_id({}) returned None".format(show_id))
-            return None
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
