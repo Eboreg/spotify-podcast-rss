@@ -1,5 +1,3 @@
-from wsgiref.util import shift_path_info
-
 from spr import SPR, Config
 
 
@@ -9,7 +7,7 @@ def application(environ, start_response):
     config = Config.load()
     spr = SPR(**config.__dict__)
 
-    show_id = shift_path_info(environ)
+    show_id = environ.get("PATH_INFO").split("/")[-1]
     rss = spr.get_rss_by_show_id(show_id)
 
     if rss is None:
