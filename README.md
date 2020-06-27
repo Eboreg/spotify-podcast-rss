@@ -2,6 +2,12 @@
 
 Produces a simple RSS feed for podcasts on Spotify. Unfortunately not with links to mp3 files or such, since Spotify doesn't provide those. But still.
 
+## Requirements
+
+```shell
+pip install feedgen python-dateutil spotipy
+```
+
 ## Configuration
 
 First, make sure you have a [Spotify app](https://developer.spotify.com/dashboard/applications).
