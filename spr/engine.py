@@ -39,7 +39,7 @@ class SPR:
                 break
             else:
                 offset += 50
-        return eps
+        return sorted(eps, key=lambda v: v.get("release_date", ""), reverse=True)
 
     @ignore_spotify_errors
     def get_show_by_show_id(self, show_id):
@@ -73,7 +73,7 @@ class SPR:
             for key, value in ep["external_urls"].items():
                 if url is None or not key == "spotify":
                     url = value
-            fe = fg.add_entry()
+            fe = fg.add_entry(order="append")
             fe.title(ep["name"])
             fe.id(ep["id"])
             fe.description(ep.get("description", None))
