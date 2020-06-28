@@ -26,4 +26,7 @@ def application(environ, start_response):
 
     start_response(status, response_headers)
 
+    if environ.get("REQUEST_METHOD").upper() == "HEAD":
+        return []
+
     return [content]
