@@ -5,7 +5,6 @@ from datetime import timezone
 import spotipy
 from dateutil.parser import parse as datetime_parse
 from feedgen.feed import FeedGenerator
-
 from spotipy.oauth2 import SpotifyClientCredentials
 
 
