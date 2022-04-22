@@ -66,17 +66,28 @@ class SPR:
         fg.description(show.get("description", None))
 
         for ep in eps:
-            if "external_urls" not in ep or not ep["external_urls"]:
+            if not ep["external_urls"]:
                 continue
             url = None
             for key, value in ep["external_urls"].items():
-                if url is None or not key == "spotify":
+                if key == "spotify":
                     url = value
+                    break
             fe = fg.add_entry(order="append")
             fe.title(ep["name"])
             fe.id(ep["id"])
-            fe.description(ep.get("description", None))
-            fe.link(href=url)
+            fe.description(ep["description"])
+            if len(ep["languages"]) == 1:
+                fe.link(href=url, hreflang=ep["languages"][0])
+            else:
+                fe.link(href=url)
+            if ep["explicit"]:
+                fe.podcast.itunes_explicit("yes")
+            if ep["images"]:
+                # Spotify says the largest image will be first
+                # We do a very ugly hack here because feedgen insists that the
+                # string ends with '.jpg' or '.png'
+                fe.podcast.itunes_image(ep["images"][0]["url"] + "#.jpg")
             try:
                 published = datetime_parse(ep["release_date"])
                 if published.tzinfo is None:
@@ -84,6 +95,5 @@ class SPR:
                 fe.published(published)
             except Exception:
                 pass
-            if "duration_ms" in ep:
-                fe.podcast.itunes_duration(int(ep["duration_ms"] / 1000))
+            fe.podcast.itunes_duration(int(ep["duration_ms"] / 1000))
         return fg.rss_str(pretty=True)
