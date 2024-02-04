@@ -24,28 +24,24 @@ def application(environ, start_response):
         return []
 
     show_id = environ.get("PATH_INFO").split("/")[-1]
+    content: bytes = b""
+    content_type: str = ""
+    status = "200 OK"
 
     if not show_id:
-        with open(os.path.join(os.path.dirname(__file__), "html/index.html")) as html:
+        with open(os.path.join(os.path.dirname(__file__), "html/index.html"), mode="rt", encoding="utf-8") as html:
             content = html.read().encode()
         content_type = "text/html; charset=utf-8"
-        status = "200 OK"
 
     if show_id:  # not 'else', because show_id could have been reset above
         rss = spr.get_rss_by_show_id(show_id)
         if rss is None:
-            content = "Show ID {} not found".format(show_id).encode()
+            content = f"Show ID {show_id} not found".encode()
             content_type = "text/plain; charset=utf-8"
             status = "404 Not Found"
         else:
             content = rss
             content_type = "application/rss+xml; charset=utf-8"
-            status = "200 OK"
-
-    # Debug stuff
-    # content = "\n".join(["%s: %s" % (k, v) for k, v in sorted(environ.items())]).encode()
-    # status = "200 OK"
-    # content_type = "text/plain; charset=utf-8"
 
     response_headers = [
         ("Content-Type", content_type),

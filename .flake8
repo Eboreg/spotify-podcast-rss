@@ -1,0 +1,11 @@
+[flake8]
+exclude =
+    .git
+    __pycache__
+    *.pyi
+    **/lib/**/*
+    .venv
+    .vscode
+ignore = F723,W504
+max-line-length = 119
+max-doc-length = 79

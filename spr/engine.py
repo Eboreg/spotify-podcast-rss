@@ -1,10 +1,13 @@
 import functools
+from typing import cast
 import warnings
 from datetime import timezone
 
 import spotipy
 from dateutil.parser import parse as datetime_parse
 from feedgen.feed import FeedGenerator
+from feedgen.entry import FeedEntry
+from feedgen.ext.podcast_entry import PodcastEntryExtension
 from spotipy.oauth2 import SpotifyClientCredentials
 
 
@@ -16,6 +19,10 @@ def ignore_spotify_errors(func):
         except spotipy.SpotifyException:
             return None
     return wrapper
+
+
+class PodcastFeedEntry(FeedEntry):
+    podcast: PodcastEntryExtension
 
 
 class SPR:
@@ -33,11 +40,11 @@ class SPR:
         offset = 0
         while True:
             ret = self.spotipy.show_episodes(show_id, limit=50, market=self.market, offset=offset)
-            eps.extend([ep for ep in ret["items"] if ep["is_playable"]])
-            if ret["next"] is None:
+            if ret:
+                eps.extend([ep for ep in ret["items"] if ep["is_playable"]])
+            if ret is None or ret["next"] is None:
                 break
-            else:
-                offset += 50
+            offset += 50
         return sorted(eps, key=lambda v: v.get("release_date", ""), reverse=True)
 
     @ignore_spotify_errors
@@ -47,11 +54,11 @@ class SPR:
     def get_rss_by_show_id(self, show_id):
         show = self.get_show_by_show_id(show_id)
         if show is None:
-            warnings.warn("get_show_by_show_id({}) returned None".format(show_id))
+            warnings.warn(f"get_show_by_show_id({show_id}) returned None")
             return None
         eps = self.get_episodes_by_show_id(show_id)
         if eps is None:
-            warnings.warn("get_episodes_by_show_id({}) returned None".format(show_id))
+            warnings.warn(f"get_episodes_by_show_id({show_id}) returned None")
 
         fg = FeedGenerator()
         fg.load_extension("podcast")
@@ -60,12 +67,13 @@ class SPR:
         if "href" in show:
             fg.link(href=show["href"], rel="via")
         if "images" in show and show["images"]:
-            fg.logo(show["images"][0]["url"])
+            fg.logo(logo=show["images"][0]["url"])
         if "languages" in show and show["languages"]:
             fg.language(show["languages"][0])
         fg.description(show.get("description", None))
 
         for ep in eps:
+            # pylint: disable=no-member
             if not ep["external_urls"]:
                 continue
             url = None
@@ -73,7 +81,7 @@ class SPR:
                 if key == "spotify":
                     url = value
                     break
-            fe = fg.add_entry(order="append")
+            fe = cast(PodcastFeedEntry, fg.add_entry(order="append"))
             fe.title(ep["name"])
             fe.id(ep["id"])
             fe.description(ep["description"])

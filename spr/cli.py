@@ -14,8 +14,10 @@ def main():
     config = Config.load(args.config)
 
     spr = SPR(**config.__dict__)
+    rss = spr.get_rss_by_show_id(args.show_id)
 
-    print(spr.get_rss_by_show_id(args.show_id).decode())
+    if rss is not None:
+        print(rss.decode())
 
 
 if __name__ == "__main__":
