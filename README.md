@@ -2,10 +2,13 @@
 
 Produces a simple RSS feed for podcasts on Spotify. Unfortunately not with links to mp3 files or such, since Spotify doesn't provide those. But still.
 
-## Requirements
+## Installation
 
 ```shell
-pip install feedgen python-dateutil spotipy
+python -m venv .venv
+source .venv/bin/activate
+pip install .
+# To install dev and www packages: pip install .[dev,www]
 ```
 
 ## Configuration
@@ -37,4 +40,6 @@ spr [-c/--config (path to config file)] SPOTIFY_SHOW_ID
 
 ### WSGI
 
-`spr.wsgi` contains a very simple WSGI application. Given a URL ending with a Spotify show ID, it outputs an RSS feed for that podcast, or a 404 response if the podcast was not found. Without show ID, it gives you a wonderfully primitive POST form, which accepts a show ID or a full Spotify show URL.
+`spr.wsgi` contains a very simple WSGI application. Given a URL ending with a Spotify show ID, it outputs an RSS feed for that podcast, or a 404 response if the podcast was not found. Without show ID, it gives you a wonderfully primitive HTML form, which accepts a show ID or a full Spotify show URL.
+
+In order to use this, the package needs to be installed with the `www` extra (e.g. `pip install .[www]`).

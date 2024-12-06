@@ -4,12 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SPR</title>
+    <style>
+        body {
+            align-items: center;
+            display: flex;
+            flex-direction: column;
+            margin: 2rem 8px;
+        }
+        main {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            width: min(1000px, 100%);
+        }
+        h1 {
+            margin: 0;
+        }
+        p {
+            margin: 0 0 5px 0;
+        }
+        .q {
+            display: flex;
+            gap: 10px;
+        }
+        .q input {
+            padding: 10px;
+        }
+        .q input[type=text] {
+            flex-grow: 1;
+        }
+        .error {
+            color: red;
+        }
+    </style>
 </head>
 <body>
-    <form action="" method="post">
-        <label for="url_or_show_id">Spotify URL or show ID</label>
-        <input type="text" name="url_or_show_id" id="url_or_show_id">
-        <input type="submit" value="Submit">
-    </form>
+    <main>
+        <form action="/lookup" method="get">
+            <p>Spotify URL or show ID:</p>
+            <div class="q">
+                <input type="text" name="q" value="{{ q }}">
+                <input type="submit" value="Submit">
+            </div>
+        </form>
+        {% if show %}
+        <div>
+            <p>Podcast found:</p>
+            <h1>{{ show.name }}</h1>
+        </div>
+        <div>
+            <p>Use this URL in your RSS reader:</p>
+            <h1><a href="{{ show.feed_url }}">{{ show.feed_url }}</a></h1>
+        </div>
+        {% endif %}
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+    </main>
 </body>
 </html>

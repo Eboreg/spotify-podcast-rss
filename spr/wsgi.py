@@ -1,56 +1,101 @@
-import os
 from html import escape
-from urllib.parse import parse_qs, urljoin
+from urllib.parse import parse_qs, urlparse
+from wsgiref.types import StartResponse, WSGIEnvironment
+
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 from spr import SPR, Config
 
 
-def application(environ, start_response):
-    # http://wsgi.tutorial.codepoint.net/application-interface
-    # https://www.toptal.com/python/pythons-wsgi-server-application-interface
+jinja = Environment(
+    loader=PackageLoader("spr", "html"),
+    autoescape=select_autoescape(),
+)
 
+
+class ResponseData:
+    def __init__(self, content: bytes = b"", content_type: str = "text/plain; charset=utf-8", status: str = "200 OK"):
+        self.content = content
+        self.content_type = content_type
+        self.status = status
+
+
+def get_show_context(environ: WSGIEnvironment, show_id: str) -> dict:
     config = Config.load()
     spr = SPR(**config.__dict__)
 
-    if environ.get("REQUEST_METHOD").upper() == "POST":
-        request_body = environ["wsgi.input"].read(-1).decode("utf-8")
-        post = parse_qs(request_body)
-        try:
-            print(post, post.get("url_or_show_id", []))
-            show_id = escape(post.get("url_or_show_id", [])[-1]).strip("/").split("/")[-1]
-        except IndexError:
-            show_id = ""
-        start_response("303 See Other", [("Location", urljoin(environ.get("REQUEST_URI"), show_id))])
-        return []
+    try:
+        show = spr.spotipy.show(show_id=show_id)
+        scheme = environ.get("wsgi.url_scheme", "https")
+        host = environ.get("HTTP_HOST", "")
 
-    show_id = environ.get("PATH_INFO").split("/")[-1]
-    content: bytes = b""
-    content_type: str = ""
-    status = "200 OK"
+        return {
+            "show": {
+                "name": show["name"],
+                "feed_url": f"{scheme}://{host}/{show_id}",
+            },
+        }
+    except Exception as e:
+        return {"error": f"Error when looking up podcast: {e}"}
 
-    if not show_id:
-        with open(os.path.join(os.path.dirname(__file__), "html/index.html"), mode="rt", encoding="utf-8") as html:
-            content = html.read().encode()
-        content_type = "text/html; charset=utf-8"
 
-    if show_id:  # not 'else', because show_id could have been reset above
-        rss = spr.get_rss_by_show_id(show_id)
-        if rss is None:
-            content = f"Show ID {show_id} not found".encode()
-            content_type = "text/plain; charset=utf-8"
-            status = "404 Not Found"
-        else:
-            content = rss
-            content_type = "application/rss+xml; charset=utf-8"
+def get_index(environ: WSGIEnvironment) -> ResponseData:
+    context: dict = {}
+    template = jinja.get_template("index.html")
+    query = parse_qs(environ.get("QUERY_STRING", ""))
+    qlist = query.get("q", [])
+
+    if qlist and qlist[-1]:
+        q = qlist[-1]
+        show_id = urlparse(escape(q)).path.strip("/").split("/")[-1]
+        context.update(q=q, **get_show_context(environ, show_id))
+
+    return ResponseData(
+        content=template.render(context).encode(),
+        content_type="text/html; charset=utf-8",
+    )
+
+
+def get_rss(path: str) -> ResponseData:
+    config = Config.load()
+    spr = SPR(**config.__dict__)
+    show_id = urlparse(escape(path)).path.strip("/").split("/")[-1]
+    rss = spr.get_rss_by_show_id(show_id)
+
+    if rss is None:
+        return ResponseData(
+            content=f"Show ID {show_id} not found".encode(),
+            status="404 Not Found",
+        )
+    return ResponseData(
+        content=rss,
+        content_type="application/rss+xml; charset=utf-8",
+    )
+
+
+def application(environ: WSGIEnvironment, start_response: StartResponse):
+    # http://wsgi.tutorial.codepoint.net/application-interface
+    # https://www.toptal.com/python/pythons-wsgi-server-application-interface
+
+    method = environ.get("REQUEST_METHOD", "").upper()
+    path_components = path = environ.get("PATH_INFO", "").strip("/").split("/")
+    path = path_components[0]
+
+    if not path or path == "lookup":
+        response = get_index(environ=environ)
+    elif path == "favicon.ico":
+        response = ResponseData(status="404 Not Found")
+    else:
+        response = get_rss(path)
 
     response_headers = [
-        ("Content-Type", content_type),
-        ("Content-Length", str(len(content))),
+        ("Content-Type", response.content_type),
+        ("Content-Length", str(len(response.content))),
     ]
 
-    start_response(status, response_headers)
+    start_response(response.status, response_headers)
 
-    if environ.get("REQUEST_METHOD").upper() == "HEAD":
+    if method == "HEAD":
         return []
 
-    return [content]
+    return [response.content]

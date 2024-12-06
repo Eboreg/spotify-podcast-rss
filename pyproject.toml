@@ -40,6 +40,10 @@ dev = [
     "isort",
     "pylint",
     "types-python-dateutil",
+    "types-uwsgi",
+]
+www = [
+    "jinja2",
 ]
 
 [project.scripts]
@@ -55,6 +59,8 @@ disable = [
     "missing-module-docstring",
     "broad-exception-caught",
     "too-many-branches",
+    "too-many-locals",
+    "too-few-public-methods",
 ]
 ignore = [".venv"]
 max-line-length = 119
