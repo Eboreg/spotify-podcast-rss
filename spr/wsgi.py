@@ -28,11 +28,12 @@ def get_show_context(environ: WSGIEnvironment, show_id: str) -> dict:
         show = spr.spotipy.show(show_id=show_id)
         scheme = environ.get("wsgi.url_scheme", "https")
         host = environ.get("HTTP_HOST", "")
+        path = urlparse(environ.get("REQUEST_URI", "")).path.strip("/")
 
         return {
             "show": {
                 "name": show["name"],
-                "feed_url": f"{scheme}://{host}/{show_id}",
+                "feed_url": f"{scheme}://{host}/{path}/{show_id}",
             },
         }
     except Exception as e:
@@ -81,7 +82,7 @@ def application(environ: WSGIEnvironment, start_response: StartResponse):
     path_components = path = environ.get("PATH_INFO", "").strip("/").split("/")
     path = path_components[0]
 
-    if not path or path == "lookup":
+    if not path:
         response = get_index(environ=environ)
     elif path == "favicon.ico":
         response = ResponseData(status="404 Not Found")

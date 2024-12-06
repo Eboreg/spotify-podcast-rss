@@ -4,7 +4,7 @@ try:
 except ImportError:
     pass
 
-__version__ = "0.5.0"
+__version__ = "0.5.1"
 VERSION = tuple(map(int, __version__.split(".")))
 
 __all__ = ["SPR", "Config"]
